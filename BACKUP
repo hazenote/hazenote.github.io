@@ -1,0 +1,64 @@
+
+
+
+<p>ID3-IPSW-TOOLS</p>
+
+<h1 style="color:white;">Little tool i created because i was curious about how to interact with API , it interact , download ipsw for idevices.</h1>
+
+ <a href="https://github.com/hazenote/ID3-IPSW-TOOLS">
+    <button>Redirect To Project</button>
+  </a> 
+
+<li></li>
+<li></li>
+<li></li>
+<li></li>
+<li></li>
+<li></li>
+
+<p>IPHONE-SSH-TOOLS-SAFE-MODE</p>
+
+<h1 style="color:white;">This Tool is very simple it just ssh into a jailbroken device and send a command to put the device into safe mode. </h1>
+
+ <a href="https://github.com/hazenote/IPHONE-SSH-TOOLS-SAFE-MODE">
+    <button>Redirect To Project</button>
+  </a> 
+
+<li></li>
+<li></li>
+<li></li>
+<li></li>
+<li></li>
+<li></li>
+
+<p>IOS14-Spoofer</p>
+
+<h1 style="color:white;">This tool SSH into a device and TCP a modified version of systemversion.plist that spoof ios 14 (outdated) , this tool broke the AppStore / OTA updates / Checkra1n jailbreak. this tool came a few days after his release with another tool called 'revert' who put everything back to the og systemversion.plist </h1>
+
+<li></li>
+<li></li>
+
+<h1 style="color:white;">This tool is now private and won't be relased / updated.  </h1>
+
+
+<li></li>
+<li></li>
+<li></li>
+<li></li>
+
+<p>Private Projects / Information about my coding skills </p>
+
+<h1 style="color:white;">I have 8-10 other  projects that are kept private for now , ios related or just sandbox fun projects i've work on. </h1>
+
+<li></li>
+
+<h1 style="color:white;">I know my projects / Website are badly coded , i'm not a profesionnal at all , and doing this for fun. Still none of my projects are 'dangerous' the only one that could cause harm was the IOS-14 spoofer that broke OTA updates , this project has now been removed. All my projects are tested before release. </h1>
+
+
+
+
+
+
+<head>
+  <link rel="stylesheet" href="index.css">
+</head>
