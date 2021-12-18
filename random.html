@@ -1,0 +1,47 @@
+<center><p>RANDOM GEN TEST</p></center>
+
+
+<! This is a random character generator test-->
+
+<html>
+    
+<head> 
+<title> Random String Generator </title>
+</head>
+
+<script>
+function randomString() {
+            //define a variable consisting alphabets in small and capital letter
+	var characters = "ABCDEFGHIJKLMNOPQRSTUVWXTZabcdefghiklmnopqrstuvwxyz";
+            
+            //specify the length for the new string
+	var lenString = 15;
+	var randomstring = '';
+
+            //loop to select a new character in each iteration
+	for (var i=0; i<lenString; i++) {
+		var rnum = Math.floor(Math.random() * characters.length);
+		randomstring += characters.substring(rnum, rnum+1);
+	}
+
+             //display the generated string 
+	document.getElementById("randomfield").innerHTML = randomstring;
+}
+</script>
+
+<body>
+<center>
+
+
+
+<form name="randomform">
+<input type="button" value="GO" onClick="randomString();">
+<br><br>
+<b><p id="randomfield" style="color: green"> </p></b>
+</form>
+
+</center>
+</body>
+</html>
+
+ 
