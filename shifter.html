@@ -1,10 +1,50 @@
+<html>
 <p>Shifter :</p>
 <p>SATURDAY 18 DECEMBER 23:37</p>
 
 <p>Cause : Usual </p>
 
 
-
 <head>
   <link rel="stylesheet" href="shifter.css">
 </head>
+
+
+<script>
+function randomString() {
+            //define a variable consisting alphabets in small and capital letter
+	var characters = "ABCDEFGHIJKLMNOPQRSTUVWXTZabcdefghiklmnopqrstuvwxyz123456789";
+            
+            //specify the length for the new string
+	var lenString = 20;
+	var randomstring = '';
+
+            //loop to select a new character in each iteration
+	for (var i=0; i<lenString; i++) {
+		var rnum = Math.floor(Math.random() * characters.length);
+		randomstring += characters.substring(rnum, rnum+1);
+	}
+
+             //display the generated string 
+	document.getElementById("randomfield").innerHTML = randomstring;
+}
+</script>
+    
+<body>
+
+
+<body onload="randomString()">
+
+<STRONG>VERIF ID : </STRONG><b><STRONG id="randomfield" style="color: black"> </STRONG></b>
+
+
+
+</body>
+    
+    
+    
+    
+    
+    
+
+</html>
