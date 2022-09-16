@@ -1,0 +1,183 @@
+body {
+  background-color: teal;
+  font-family: fixedsys, consolas, monospace;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+.window {
+  background: #fff;
+  height: 100%;
+  width: 100%;
+  position: relative;
+  border: 1px solid #000;
+  z-index: 9999;
+}
+
+.window .title {
+  background: #000080;
+  color: #fff;
+  text-align: center;
+  line-height: 24px;
+  height: 26px;
+  font-weight: 500;
+  border-bottom: solid 1px #000;
+}
+
+.window .title .button {
+  background: #c0c0c0;
+  color: #000;
+  display: inline-block;
+  margin: 0px;
+  width: 20px;
+  height: 20px;
+  font-size: 12px;
+  float: right;
+  border: outset 3px;
+  line-height: 20px;
+  z-index: 5555;
+}
+
+.window .title .button:active {
+  border: inset 3px;
+}
+
+.window .title .close {
+  float: left;
+  color: #fff;
+  font-weight: 800;
+  font-size: 21px;
+  line-height: 16px;
+  text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;
+}
+
+.menubar {
+  height: 24px;
+  border-bottom: solid 1px #191919;
+}
+
+.menubar .menuitem {
+  line-height: 24px;
+  padding: 0px 7px;
+  display: inline-block;
+}
+
+.menubar .menuitem:active {
+  background: #000080;
+  color: #fff;
+}
+
+.icons {
+  position: absolute;
+  bottom: 0px;
+  left: 0px;
+  right: 0px;
+  padding: 15px 5px;
+  background: #fff;
+  z-index: 5;
+}
+
+.icons .icon {
+  display: inline-block;
+  margin: 00px 10px;
+  width: 80px;
+  font-size: 12px;
+  text-align: center;
+}
+
+.icon:active > .text {
+  background: #000080;
+  color: #fff;
+}
+
+.handle {
+  position:absolute;
+  height: 29px;
+  width: 29px;
+  border:solid 1px #000;
+}
+
+.topright {
+  top: -1px;
+  right: -1px;
+  cursor:ne-resize;
+}
+
+.bottomright {
+  bottom: -1px;
+  right: -1px;
+  cursor:nw-resize;
+}
+
+.topleft {
+  top: -1px;
+  left: -1px;
+  cursor:nw-resize;
+}
+
+.bottomleft {
+  bottom: -1px;
+  left: -1px;
+  cursor:ne-resize;
+}
+
+.window-border {
+  background: #cdcdcd;
+  position: absolute;
+  padding: 2px 4px 4px 2px;
+  border: 1px solid #000;  
+  width: 550px;
+  height: 300px;
+  top: 10%;
+  left: 25%;
+}
+
+.maximize {
+  position:fixed;
+  top: 0px;
+  right: 0px;
+  left: 0px;
+  bottom: 0px;
+  width: auto;
+  height: auto;
+}
+
+.ui-draggable-dragging > * {
+  display: none;
+  border: dotted 2px #777;
+  background: none;
+   background: rgba(0, 0, 0, 0);
+  border: none;
+  z-index: -999;
+}
+
+.ui-draggable-dragging {
+  border: dotted 2px #555;
+  background: rgba(0, 0, 0, 0);
+}
+
+#context-menu {
+  position: absolute;
+  border: solid 1px #000;
+  width: 150px;
+  margin: -1px;
+  margin-top: 5px;
+  z-index:999999999;
+  background: #fff;
+  box-shadow: 1px 1px 5px 0px rgba(0,0,0,.5);
+  
+}
+
+#context-menu .context-item {
+  padding: 5px;
+  font-weight: 600;
+  padding: 5px;
+}
+#context-menu .context-item:active {
+  background: #000080;
+  color: #fff;
+}
