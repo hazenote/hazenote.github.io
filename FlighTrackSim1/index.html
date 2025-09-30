@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Flight Simulator - Live Flight Status</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+<style>
+html, body { height: 100%; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+body { display: flex; flex-direction: column; }
+#map { flex: 1; }
+
+#controls {
+  position: absolute; top: 20px; left: 50%; transform: translateX(-50%);
+  background: rgba(255,255,255,0.95); padding: 12px 18px; border-radius: 15px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2); display: flex; flex-wrap: wrap;
+  align-items: center; z-index: 1000;
+}
+#controls select, #controls input, #controls button {
+  margin: 5px; padding: 8px 12px; border-radius: 8px; border: 1px solid #ccc;
+  outline: none; font-size: 14px; transition: all 0.2s ease;
+}
+#controls input { width: 60px; }
+#controls button {
+  background-color: #1e90ff; color: white; border: none; cursor: pointer;
+}
+#controls button:hover { background-color: #187bcd; transform: translateY(-1px); }
+
+#stats {
+  position: absolute;
+  top: 20px; right: 20px;
+  width: 280px;
+  padding: 15px 20px;
+  background: rgba(255,255,255,0.2);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+  color: #000;
+  font-size: 14px;
+  line-height: 1.5em;
+  z-index: 1000;
+}
+#stats h3 { margin-top: 0; margin-bottom: 10px; font-size: 16px; text-align: center; }
+#stats div { margin-bottom: 5px; }
+#flightStatus { margin-top: 10px; font-weight: bold; }
+
+#positionBox {
+  position: absolute;
+  bottom: 20px; left: 20px;
+  min-width: 220px;   /* wider to prevent wrapping */
+  padding: 10px 15px;
+  background: rgba(255,255,255,0.2);
+  backdrop-filter: blur(10px);
+  border-radius: 15px;
+  box-shadow: 0 8px 15px rgba(0,0,0,0.2);
+  color: #000;
+  font-size: 14px;
+  white-space: nowrap; /* keep everything on one line */
+  z-index: 1000;
+}
+</style>
+</head>
+<body>
+
+<div id="map"></div>
+
+<div id="controls">
+  From: <select id="from"></select>
+  To: <select id="to"></select>
+  Speed multiplier: <input type="number" id="multiplier" value="1" min="1" />
+  <button id="start">Start Flight</button>
+  <button id="follow">Follow Plane</button>
+  <button id="fullRoute">Show Full Route</button>
+  <button id="toggleNight">Toggle Night Mode</button>
+</div>
+
+<div id="stats">
+  <h3>Flight Info</h3>
+  <div id="distance">Distance traveled: 0 km</div>
+  <div id="remaining">Remaining: 0 km</div>
+  <div id="speed">Speed: 0 km/h</div>
+  <div id="altitude">Altitude: 0 m</div>
+  <div id="heading">Heading: 0°</div>
+  <div id="progress">Progress: 0%</div>
+  <div id="eta">ETA: 00:00</div>
+  <div id="timeLeft">Time left: 0h 0m</div>
+  <div id="flightStatus">Status: N/A</div>
+</div>
+
+<div id="positionBox">
+  Lat: <span id="lat">0.0000</span>°, Lon: <span id="lon">0.0000</span>°
+</div>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://rawcdn.githack.com/bbecquet/Leaflet.RotatedMarker/master/leaflet.rotatedMarker.js"></script>
+<script>
+// Airports
+const airports = [
+  {code:"ATL",name:"Hartsfield–Jackson Atlanta",lat:33.6407,lon:-84.4277},
+  {code:"PEK",name:"Beijing Capital",lat:40.0801,lon:116.5846},
+  {code:"LAX",name:"Los Angeles International",lat:33.9416,lon:-118.4085},
+  {code:"DXB",name:"Dubai International",lat:25.2532,lon:55.3657},
+  {code:"HND",name:"Tokyo Haneda",lat:35.5494,lon:139.7798},
+  {code:"ORD",name:"O'Hare Chicago",lat:41.9742,lon:-87.9073},
+  {code:"LHR",name:"London Heathrow",lat:51.4700,lon:-0.4543},
+  {code:"JFK",name:"John F. Kennedy",lat:40.6413,lon:-73.7781},
+  {code:"CDG",name:"Paris Charles de Gaulle",lat:49.0097,lon:2.5479},
+  {code:"DUB",name:"Dublin",lat:53.4213,lon:-6.2701},
+  {code:"ORK",name:"Cork",lat:51.8410,lon:-8.4910},
+  {code:"MRS",name:"Marseille",lat:43.4356,lon:5.2150},
+  {code:"OSL",name:"Oslo Gardermoen",lat:60.1939,lon:11.1004},
+];
+
+const fromSelect=document.getElementById('from');
+const toSelect=document.getElementById('to');
+airports.forEach(a=>{
+  fromSelect.innerHTML+=`<option value="${a.code}">${a.name} (${a.code})</option>`;
+  toSelect.innerHTML+=`<option value="${a.code}">${a.name} (${a.code})</option>`;
+});
+
+// Map
+const map=L.map('map').setView([20,0],15);
+const dayLayer=L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png');
+const nightLayer=L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{subdomains:'abcd', attribution:'&copy; OSM &copy; CARTO'});
+dayLayer.addTo(map);
+let nightMode=false;
+
+// Flight utils
+function haversine(a,b){const R=6371;const dLat=(b.lat-a.lat)*Math.PI/180;const dLon=(b.lon-a.lon)*Math.PI/180;const lat1=a.lat*Math.PI/180;const lat2=b.lat*Math.PI/180;const h=Math.sin(dLat/2)**2+Math.cos(lat1)*Math.cos(lat2)*Math.sin(dLon/2)**2;return 2*R*Math.asin(Math.sqrt(h));}
+function flightSpeed(progress){if(progress<0.1)return 250+550*(progress/0.1);if(progress<0.9)return 800;return 800-550*((progress-0.9)/0.1);}
+function interpolateGC(start,end,t){const lat1=start.lat*Math.PI/180, lon1=start.lon*Math.PI/180; const lat2=end.lat*Math.PI/180, lon2=end.lon*Math.PI/180; const d=haversine(start,end)/6371; const A=Math.sin((1-t)*d)/Math.sin(d), B=Math.sin(t*d)/Math.sin(d); const x=A*Math.cos(lat1)*Math.cos(lon1)+B*Math.cos(lat2)*Math.cos(lon2); const y=A*Math.cos(lat1)*Math.sin(lon1)+B*Math.cos(lat2)*Math.sin(lon2); const z=A*Math.sin(lat1)+B*Math.sin(lat2); return {lat:Math.atan2(z,Math.sqrt(x*x+y*y))*180/Math.PI, lon:Math.atan2(y,x)*180/Math.PI};}
+function generateGCLine(start,end,steps=200){const points=[];for(let i=0;i<=steps;i++){const t=i/steps; points.push([interpolateGC(start,end,t).lat, interpolateGC(start,end,t).lon]);} return points;}
+function getBearing(a,b){const lat1=a.lat*Math.PI/180, lon1=a.lon*Math.PI/180; const lat2=b.lat*Math.PI/180, lon2=b.lon*Math.PI/180; const y=Math.sin(lon2-lon1)*Math.cos(lat2); const x=Math.cos(lat1)*Math.sin(lat2)-Math.sin(lat1)*Math.cos(lat2)*Math.cos(lon2-lon1); return (Math.atan2(y,x)*180/Math.PI+360)%360; }
+
+let followPlane=false, flightMarker, line;
+const planeIcon=L.icon({iconUrl:'https://cdn-icons-png.flaticon.com/512/684/684908.png', iconSize:[40,40], iconAnchor:[20,20]});
+const statusElement = document.getElementById('flightStatus');
+
+function animateFlight(start,end,speedMultiplier){
+  const totalDistance=haversine(start,end); let traveled=0;
+  if(flightMarker) map.removeLayer(flightMarker);
+  if(line) map.removeLayer(line);
+  flightMarker=L.marker([start.lat,start.lon], {icon:planeIcon, rotationAngle:0, rotationOrigin:'center'}).addTo(map);
+  const gcPoints=generateGCLine(start,end,200);
+  line=L.polyline(gcPoints,{color:'blue'}).addTo(map);
+  map.fitBounds(line.getBounds());
+  const intervalTime=1000;
+  const startTime=new Date();
+
+  const infoElements = {
+    distance: document.getElementById('distance'),
+    remaining: document.getElementById('remaining'),
+    speed: document.getElementById('speed'),
+    altitude: document.getElementById('altitude'),
+    heading: document.getElementById('heading'),
+    progress: document.getElementById('progress'),
+    eta: document.getElementById('eta'),
+    timeLeft: document.getElementById('timeLeft')
+  };
+
+  const steps = 200; 
+  const stepDistances = [];
+  for(let i=0;i<steps;i++){
+    stepDistances.push(haversine(interpolateGC(start,end,i/steps), interpolateGC(start,end,(i+1)/steps)));
+  }
+
+  const interval=setInterval(()=>{
+    const progress=traveled/totalDistance;
+    const speed=flightSpeed(progress);
+    const distanceThisInterval=(speed/3600)*speedMultiplier;
+    const prevPos=interpolateGC(start,end,traveled/totalDistance);
+    traveled+=distanceThisInterval;
+    if(traveled>=totalDistance){
+      flightMarker.setLatLng([end.lat,end.lon]);
+      infoElements.distance.textContent=`Distance traveled: ${totalDistance.toFixed(1)} km`;
+      statusElement.textContent = 'Status: Landed';
+      document.getElementById('lat').textContent = end.lat.toFixed(4);
+      document.getElementById('lon').textContent = end.lon.toFixed(4);
+      clearInterval(interval); return;
+    }
+    const pos=interpolateGC(start,end,traveled/totalDistance);
+    flightMarker.setLatLng([pos.lat,pos.lon]);
+    flightMarker.setRotationAngle(getBearing(prevPos,pos));
+    if(followPlane) map.setView([pos.lat,pos.lon],15);
+
+    let altitude=0;
+    if(progress<0.1) altitude=0+10000*(progress/0.1);
+    else if(progress<0.9) altitude=10000;
+    else altitude=10000-10000*((progress-0.9)/0.1);
+
+    let status = '';
+    if(traveled === 0) status = 'Taxi / Takeoff';
+    else if(progress < 0.1) status = 'Climb';
+    else if(progress < 0.9) status = 'Cruise';
+    else if(progress < 1) status = 'Descent';
+    else status = 'Landed';
+    statusElement.textContent = `Status: ${status}`;
+
+    let etaHours = 0;
+    let remainingDist = 0;
+    for(let i=Math.floor(progress*steps);i<steps;i++){
+      const stepProgress = i/steps;
+      const stepSpeed = flightSpeed(stepProgress)*speedMultiplier;
+      etaHours += stepDistances[i]/stepSpeed;
+      remainingDist += stepDistances[i];
+    }
+    const etaClock=new Date(startTime.getTime() + etaHours*3600000);
+    const etaStr=`${etaClock.getHours().toString().padStart(2,'0')}:${etaClock.getMinutes().toString().padStart(2,'0')}`;
+    const remainingHours=Math.floor(etaHours);
+    const remainingMinutes=Math.round((etaHours-remainingHours)*60);
+
+    infoElements.distance.textContent = `Distance traveled: ${traveled.toFixed(1)} km`;
+    infoElements.remaining.textContent = `Remaining: ${remainingDist.toFixed(1)} km`;
+    infoElements.speed.textContent = `Speed: ${speed.toFixed(0)} km/h`;
+    infoElements.altitude.textContent = `Altitude: ${altitude.toFixed(0)} m`;
+    infoElements.heading.textContent = `Heading: ${getBearing(prevPos,pos).toFixed(0)}°`;
+    infoElements.progress.textContent = `Progress: ${(progress*100).toFixed(0)}%`;
+    infoElements.eta.textContent = `ETA: ${etaStr}`;
+    infoElements.timeLeft.textContent = `Time left: ${remainingHours}h ${remainingMinutes}m`;
+
+    document.getElementById('lat').textContent = pos.lat.toFixed(4);
+    document.getElementById('lon').textContent = pos.lon.toFixed(4);
+
+  }, intervalTime);
+}
+
+document.getElementById('start').addEventListener('click',()=>{
+  const from=airports.find(a=>a.code===fromSelect.value);
+  const to=airports.find(a=>a.code===toSelect.value);
+  const multiplier=parseFloat(document.getElementById('multiplier').value)||1;
+  animateFlight(from,to,multiplier);
+});
+document.getElementById('follow').addEventListener('click',()=>followPlane=!followPlane);
+document.getElementById('fullRoute').addEventListener('click',()=>{
+  const from=airports.find(a=>a.code===fromSelect.value);
+  const to=airports.find(a=>a.code===toSelect.value);
+  map.fitBounds([[from.lat,from.lon],[to.lat,to.lon]]);
+  followPlane=false;
+});
+document.getElementById('toggleNight').addEventListener('click',()=>{
+  if(nightMode){ map.removeLayer(nightLayer); dayLayer.addTo(map); }
+  else{ map.removeLayer(dayLayer); nightLayer.addTo(map); }
+  nightMode=!nightMode;
+});
+</script>
+</body>
+</html>
+
