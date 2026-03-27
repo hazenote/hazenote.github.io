@@ -1,0 +1,629 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Repeating Interval Timer</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #0b0f14;
+      --panel: #151b23;
+      --muted: #93a1b2;
+      --text: #e6edf3;
+      --accent: #4da3ff;
+      --danger: #ff6b6b;
+      --border: #2d3743;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: linear-gradient(180deg, #0b0f14 0%, #111827 100%);
+      color: var(--text);
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+
+    .card {
+      width: min(100%, 700px);
+      background: rgba(21, 27, 35, 0.95);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 24px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+      backdrop-filter: blur(10px);
+    }
+
+    h1 {
+      margin: 0 0 6px;
+      font-size: 28px;
+    }
+
+    p.sub {
+      margin: 0 0 24px;
+      color: var(--muted);
+    }
+
+    .time {
+      font-size: 64px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      text-align: center;
+      margin: 10px 0 10px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .status {
+      text-align: center;
+      color: var(--muted);
+      min-height: 24px;
+      margin-bottom: 10px;
+    }
+
+    .cycle {
+      text-align: center;
+      color: var(--muted);
+      margin-bottom: 22px;
+      font-size: 14px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .field {
+      display: grid;
+      gap: 8px;
+    }
+
+    .field-full {
+      display: grid;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .section {
+      margin-top: 22px;
+      padding-top: 18px;
+      border-top: 1px solid var(--border);
+    }
+
+    .section h2 {
+      margin: 0 0 14px;
+      font-size: 18px;
+    }
+
+    label {
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    input, select, textarea, button {
+      width: 100%;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      padding: 12px 14px;
+      font-size: 16px;
+      background: #0f141b;
+      color: var(--text);
+    }
+
+    textarea {
+      min-height: 84px;
+      resize: vertical;
+      font-family: inherit;
+    }
+
+    .actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 1fr;
+      gap: 12px;
+      margin-top: 10px;
+    }
+
+    .test-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 8px;
+    }
+
+    button {
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    button.primary {
+      background: var(--accent);
+      color: white;
+      border: none;
+    }
+
+    button.secondary {
+      background: transparent;
+    }
+
+    button.danger {
+      background: var(--danger);
+      color: white;
+      border: none;
+    }
+
+    .meta {
+      margin-top: 20px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .pill {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(77, 163, 255, 0.15);
+      border: 1px solid rgba(77, 163, 255, 0.35);
+      color: #b9d9ff;
+      margin-top: 8px;
+    }
+
+    @media (max-width: 720px) {
+      .grid,
+      .actions,
+      .test-actions {
+        grid-template-columns: 1fr;
+      }
+
+      .time {
+        font-size: 48px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <h1>Repeating Interval Timer</h1>
+    <p class="sub">Set it once, then it repeats automatically until you cancel it.</p>
+
+    <div id="time" class="time">30:00</div>
+    <div id="status" class="status">Ready</div>
+    <div id="cycle" class="cycle">Cycle: 0</div>
+
+    <div class="grid">
+      <div class="field">
+        <label for="duration">Duration (minutes)</label>
+        <input id="duration" type="number" min="1" step="1" value="30" />
+      </div>
+
+      <div class="field">
+        <label for="warningMinutes">Reminder before end</label>
+        <select id="warningMinutes">
+          <option value="0">Off</option>
+          <option value="1">1 minute</option>
+          <option value="2">2 minutes</option>
+          <option value="5" selected>5 minutes</option>
+          <option value="10">10 minutes</option>
+          <option value="15">15 minutes</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button id="notifyBtn" class="secondary">Enable notifications</button>
+      <button id="testBtn" class="secondary">Test notification</button>
+      <button id="startBtn" class="primary">Start repeating</button>
+      <button id="cancelBtn" class="danger">Cancel</button>
+    </div>
+
+    <div class="section">
+      <h2>Warning notification</h2>
+
+      <div class="field-full">
+        <label for="warningTitle">Warning title</label>
+        <input id="warningTitle" type="text" value="Timer almost done" />
+      </div>
+
+      <div class="field-full">
+        <label for="warningBody">Warning message</label>
+        <textarea id="warningBody">Only {minutes} minute(s) left.</textarea>
+      </div>
+
+      <div class="test-actions">
+        <button id="testWarningBtn" class="secondary">Test warning</button>
+        <div></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Finished notification</h2>
+
+      <div class="field-full">
+        <label for="finishTitle">Finished title</label>
+        <input id="finishTitle" type="text" value="Timer finished" />
+      </div>
+
+      <div class="field-full">
+        <label for="finishBody">Finished message</label>
+        <textarea id="finishBody">Cycle {cycle} completed.</textarea>
+      </div>
+
+      <div class="test-actions">
+        <button id="testFinishBtn" class="secondary">Test finished</button>
+        <div></div>
+      </div>
+    </div>
+
+    <div class="meta">
+      <div><strong>Behavior:</strong> once started, it repeats forever using the same duration and early reminder until you press Cancel.</div>
+      <div class="pill">State is saved locally</div>
+      <div style="margin-top:8px;">This remembers your timer and custom notification text after refresh or reopening the page.</div>
+      <div style="margin-top:8px;"><strong>Placeholders:</strong> use <code>{minutes}</code> in the warning message and <code>{cycle}</code> in the finished message.</div>
+    </div>
+  </main>
+
+  <script>
+    const STORAGE_KEY = 'repeating_interval_timer_v2';
+
+    const timeEl = document.getElementById('time');
+    const statusEl = document.getElementById('status');
+    const cycleEl = document.getElementById('cycle');
+
+    const durationEl = document.getElementById('duration');
+    const warningMinutesEl = document.getElementById('warningMinutes');
+
+    const warningTitleEl = document.getElementById('warningTitle');
+    const warningBodyEl = document.getElementById('warningBody');
+    const finishTitleEl = document.getElementById('finishTitle');
+    const finishBodyEl = document.getElementById('finishBody');
+
+    const notifyBtn = document.getElementById('notifyBtn');
+    const testBtn = document.getElementById('testBtn');
+    const testWarningBtn = document.getElementById('testWarningBtn');
+    const testFinishBtn = document.getElementById('testFinishBtn');
+    const startBtn = document.getElementById('startBtn');
+    const cancelBtn = document.getElementById('cancelBtn');
+
+    let tickInterval = null;
+    let endAt = null;
+    let warningSent = false;
+    let isRunning = false;
+    let cycleCount = 0;
+    let cycleStartedAt = null;
+
+    let settings = {
+      durationMinutes: 30,
+      warningMinutes: 5,
+      warningTitle: 'Timer almost done',
+      warningBody: 'Only {minutes} minute(s) left.',
+      finishTitle: 'Timer finished',
+      finishBody: 'Cycle {cycle} completed.'
+    };
+
+    function saveState() {
+      const state = {
+        settings,
+        isRunning,
+        cycleCount,
+        cycleStartedAt,
+        endAt,
+        savedAt: Date.now()
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return null;
+        return JSON.parse(raw);
+      } catch {
+        return null;
+      }
+    }
+
+    function clearState() {
+      localStorage.removeItem(STORAGE_KEY);
+    }
+
+    function formatRemaining(ms) {
+      const totalSeconds = Math.max(0, Math.ceil(ms / 1000));
+      const minutes = Math.floor(totalSeconds / 60);
+      const seconds = totalSeconds % 60;
+      return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    }
+
+    function renderTemplate(template, data) {
+      return String(template).replace(/\{(\w+)\}/g, (_, key) => {
+        return data[key] !== undefined ? String(data[key]) : `{${key}}`;
+      });
+    }
+
+    function sendNotification(title, body) {
+      if (!('Notification' in window)) return false;
+      if (Notification.permission !== 'granted') return false;
+
+      new Notification(title, { body });
+      return true;
+    }
+
+    function sendWarningNotification() {
+      const title = settings.warningTitle || 'Timer almost done';
+      const body = renderTemplate(
+        settings.warningBody || 'Only {minutes} minute(s) left.',
+        { minutes: settings.warningMinutes, cycle: cycleCount }
+      );
+      return sendNotification(title, body);
+    }
+
+    function sendFinishedNotification() {
+      const title = settings.finishTitle || 'Timer finished';
+      const body = renderTemplate(
+        settings.finishBody || 'Cycle {cycle} completed.',
+        { minutes: settings.warningMinutes, cycle: cycleCount }
+      );
+      return sendNotification(title, body);
+    }
+
+    async function requestNotifications() {
+      if (!('Notification' in window)) {
+        statusEl.textContent = 'This browser does not support notifications.';
+        return;
+      }
+
+      const result = await Notification.requestPermission();
+
+      if (result === 'granted') {
+        statusEl.textContent = 'Notifications enabled';
+      } else {
+        statusEl.textContent = 'Notifications not enabled';
+      }
+    }
+
+    function updateIdleDisplay() {
+      const duration = Math.max(1, Number(durationEl.value) || 30);
+      timeEl.textContent = `${String(duration).padStart(2, '0')}:00`;
+
+      if (!isRunning) {
+        cycleEl.textContent = 'Cycle: 0';
+      }
+    }
+
+    function setInputsLocked(locked) {
+      durationEl.disabled = locked;
+      warningMinutesEl.disabled = locked;
+      startBtn.disabled = locked;
+    }
+
+    function syncSettingsFromInputs() {
+      settings.durationMinutes = Math.max(1, Number(durationEl.value) || 30);
+      settings.warningMinutes = Math.max(0, Number(warningMinutesEl.value) || 0);
+      settings.warningTitle = warningTitleEl.value.trim() || 'Timer almost done';
+      settings.warningBody = warningBodyEl.value.trim() || 'Only {minutes} minute(s) left.';
+      settings.finishTitle = finishTitleEl.value.trim() || 'Timer finished';
+      settings.finishBody = finishBodyEl.value.trim() || 'Cycle {cycle} completed.';
+    }
+
+    function applySettingsToInputs() {
+      durationEl.value = settings.durationMinutes;
+      warningMinutesEl.value = String(settings.warningMinutes);
+      warningTitleEl.value = settings.warningTitle;
+      warningBodyEl.value = settings.warningBody;
+      finishTitleEl.value = settings.finishTitle;
+      finishBodyEl.value = settings.finishBody;
+    }
+
+    function startCycle() {
+      const durationMs = settings.durationMinutes * 60 * 1000;
+      cycleStartedAt = Date.now();
+      endAt = cycleStartedAt + durationMs;
+      warningSent = false;
+      cycleCount += 1;
+
+      cycleEl.textContent = `Cycle: ${cycleCount}`;
+      saveState();
+      updateClock();
+    }
+
+    function startRepeatingTimer() {
+      syncSettingsFromInputs();
+
+      isRunning = true;
+      cycleCount = 0;
+      cycleStartedAt = null;
+      endAt = null;
+      warningSent = false;
+
+      setInputsLocked(true);
+
+      if (tickInterval) {
+        clearInterval(tickInterval);
+      }
+
+      startCycle();
+      tickInterval = setInterval(updateClock, 250);
+      saveState();
+    }
+
+    function cancelTimer() {
+      isRunning = false;
+      endAt = null;
+      warningSent = false;
+      cycleCount = 0;
+      cycleStartedAt = null;
+
+      if (tickInterval) {
+        clearInterval(tickInterval);
+        tickInterval = null;
+      }
+
+      setInputsLocked(false);
+      syncSettingsFromInputs();
+      clearState();
+      saveState();
+
+      statusEl.textContent = 'Cancelled';
+      cycleEl.textContent = 'Cycle: 0';
+      updateIdleDisplay();
+    }
+
+    function updateClock() {
+      if (!isRunning || !endAt) return;
+
+      const remaining = endAt - Date.now();
+
+      if (
+        !warningSent &&
+        settings.warningMinutes > 0 &&
+        remaining <= settings.warningMinutes * 60 * 1000 &&
+        remaining > 0
+      ) {
+        warningSent = true;
+        saveState();
+        sendWarningNotification();
+      }
+
+      if (remaining <= 0) {
+        sendFinishedNotification();
+        startCycle();
+        return;
+      }
+
+      timeEl.textContent = formatRemaining(remaining);
+
+      const endTime = new Date(endAt).toLocaleTimeString([], {
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+
+      statusEl.textContent = `Running • ends at ${endTime}`;
+    }
+
+    function restoreFromSavedState() {
+      const state = loadState();
+
+      if (!state) {
+        applySettingsToInputs();
+        updateIdleDisplay();
+        return;
+      }
+
+      if (state.settings) {
+        settings.durationMinutes = Math.max(1, Number(state.settings.durationMinutes) || 30);
+        settings.warningMinutes = Math.max(0, Number(state.settings.warningMinutes) || 0);
+        settings.warningTitle = state.settings.warningTitle || 'Timer almost done';
+        settings.warningBody = state.settings.warningBody || 'Only {minutes} minute(s) left.';
+        settings.finishTitle = state.settings.finishTitle || 'Timer finished';
+        settings.finishBody = state.settings.finishBody || 'Cycle {cycle} completed.';
+      }
+
+      applySettingsToInputs();
+
+      if (!state.isRunning) {
+        updateIdleDisplay();
+        return;
+      }
+
+      isRunning = true;
+      setInputsLocked(true);
+
+      const durationMs = settings.durationMinutes * 60 * 1000;
+      const now = Date.now();
+
+      let restoredCycleStartedAt = Number(state.cycleStartedAt) || now;
+      let restoredCycleCount = Number(state.cycleCount) || 1;
+
+      if (now >= restoredCycleStartedAt) {
+        const elapsedSinceCycleStart = now - restoredCycleStartedAt;
+        const completedExtraCycles = Math.floor(elapsedSinceCycleStart / durationMs);
+
+        restoredCycleCount += completedExtraCycles;
+        restoredCycleStartedAt = restoredCycleStartedAt + (completedExtraCycles * durationMs);
+      }
+
+      cycleCount = restoredCycleCount;
+      cycleStartedAt = restoredCycleStartedAt;
+      endAt = cycleStartedAt + durationMs;
+
+      const remaining = endAt - now;
+      warningSent = settings.warningMinutes > 0
+        ? remaining <= settings.warningMinutes * 60 * 1000
+        : false;
+
+      cycleEl.textContent = `Cycle: ${cycleCount}`;
+
+      if (tickInterval) {
+        clearInterval(tickInterval);
+      }
+
+      tickInterval = setInterval(updateClock, 250);
+      saveState();
+      updateClock();
+    }
+
+    function saveSettingsOnly() {
+      syncSettingsFromInputs();
+      saveState();
+    }
+
+    notifyBtn.addEventListener('click', requestNotifications);
+
+    testBtn.addEventListener('click', () => {
+      syncSettingsFromInputs();
+      const ok = sendNotification('Test notification', 'Notifications are working.');
+      if (!ok) {
+        statusEl.textContent = 'Enable notifications first.';
+      } else {
+        statusEl.textContent = 'Test notification sent';
+      }
+      saveState();
+    });
+
+    testWarningBtn.addEventListener('click', () => {
+      syncSettingsFromInputs();
+      const ok = sendWarningNotification();
+      if (!ok) {
+        statusEl.textContent = 'Enable notifications first.';
+      } else {
+        statusEl.textContent = 'Warning notification sent';
+      }
+      saveState();
+    });
+
+    testFinishBtn.addEventListener('click', () => {
+      syncSettingsFromInputs();
+      const ok = sendFinishedNotification();
+      if (!ok) {
+        statusEl.textContent = 'Enable notifications first.';
+      } else {
+        statusEl.textContent = 'Finished notification sent';
+      }
+      saveState();
+    });
+
+    startBtn.addEventListener('click', startRepeatingTimer);
+    cancelBtn.addEventListener('click', cancelTimer);
+
+    durationEl.addEventListener('input', () => {
+      if (!isRunning) updateIdleDisplay();
+      saveSettingsOnly();
+    });
+
+    warningMinutesEl.addEventListener('change', saveSettingsOnly);
+    warningTitleEl.addEventListener('input', saveSettingsOnly);
+    warningBodyEl.addEventListener('input', saveSettingsOnly);
+    finishTitleEl.addEventListener('input', saveSettingsOnly);
+    finishBodyEl.addEventListener('input', saveSettingsOnly);
+
+    restoreFromSavedState();
+  </script>
+</body>
+</html>
