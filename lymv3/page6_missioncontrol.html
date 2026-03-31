@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Mission Control</title>
+<style>
+body{margin:0;background:radial-gradient(circle at top,#11213f,#09111f 58%,#050813);min-height:100vh;color:#f8fafc;font-family:Inter,system-ui,sans-serif;padding:24px}
+.wrap{max-width:1100px;margin:auto}
+h1{margin:0 0 16px;font-size:clamp(2rem,4vw,3.3rem)}
+.grid{display:grid;grid-template-columns:2fr 1fr 1fr;gap:16px}
+@media(max-width:980px){.grid{grid-template-columns:1fr}}
+.card{padding:20px;border-radius:24px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08)}
+.big{font-size:1.2rem;font-weight:700;margin-bottom:10px}
+.meter{height:14px;background:rgba(255,255,255,.08);border-radius:999px;overflow:hidden;margin:12px 0}
+.fill{height:100%;width:70%;background:linear-gradient(90deg,#38bdf8,#22c55e);animation:grow 3s ease-in-out infinite alternate}
+.orbit{height:180px;position:relative}
+.center{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:26px;height:26px;border-radius:50%;background:#38bdf8;box-shadow:0 0 20px rgba(56,189,248,.6)}
+.dot{position:absolute;left:50%;top:50%;width:14px;height:14px;border-radius:50%;background:#22c55e;transform-origin:-70px 0;animation:orb 4s linear infinite}
+.dot.two{transform-origin:-44px 0;animation-duration:2.8s;background:#f59e0b}
+.note{font-size:1.06rem;line-height:1.7}
+@keyframes orb{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+@keyframes grow{from{width:18%}to{width:88%}}
+</style></head><body><div class="wrap">
+<h1>Mission Control: Desk Departure Event</h1>
+<div class="grid">
+  <div class="card">
+    <div class="big">System overview</div>
+    <div class="note" id="note"></div>
+    <div class="meter"><div class="fill"></div></div>
+    <div class="note">This one leans more “informative sci-fi dashboard” than “big joke in the center.”</div>
+  </div>
+  <div class="card">
+    <div class="big">Orbit monitor</div>
+    <div class="orbit"><div class="center"></div><div class="dot"></div><div class="dot two"></div></div>
+  </div>
+  <div class="card">
+    <div class="big">Advisory</div>
+    <div class="note" id="advice"></div>
+  </div>
+</div>
+</div>
+<script>
+
+function getTargetName() {
+  return localStorage.getItem('lock_prank_name') || 'there';
+}
+
+const name = getTargetName();
+document.getElementById('note').textContent = `${name} left the workstation zone while the session was still active. All systems agree this is an excellent moment for a stylish reminder.`;
+document.getElementById('advice').textContent = `Hey ${name}, please don't forget to lock your computer next time.`;
+</script></body></html>

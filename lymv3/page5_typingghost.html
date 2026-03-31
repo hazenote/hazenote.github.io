@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Typing Ghost</title>
+<style>
+body{margin:0;min-height:100vh;background:#05070b;color:#d1fae5;font-family:ui-monospace,Consolas,monospace;display:grid;place-items:center;padding:24px}
+.terminal{width:min(940px,95vw);background:#0b1220;border:1px solid rgba(34,197,94,.22);border-radius:24px;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,.4)}
+.top{display:flex;gap:8px;margin-bottom:16px}.dot{width:12px;height:12px;border-radius:50%}.r{background:#ef4444}.y{background:#f59e0b}.g{background:#22c55e}
+#text{white-space:pre-wrap;line-height:1.75;font-size:1.08rem;min-height:300px}
+.cursor{display:inline-block;width:10px;height:1.15em;background:#22c55e;vertical-align:middle;animation:blink 1s infinite}
+@keyframes blink{50%{opacity:0}}
+</style></head><body><div class="terminal">
+<div class="top"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+<div id="text"></div><span class="cursor"></span>
+</div>
+<script>
+
+function getTargetName() {
+  return localStorage.getItem('lock_prank_name') || 'there';
+}
+
+const name = getTargetName();
+const story = `
+booting courtesy_reminder.sh
+checking chair occupancy...
+checking keyboard activity...
+checking screen lock status...
+
+status: unlocked workstation found
+status: Annoying coworker module engaged
+
+analysis:
+- no actual damage
+- no scary virus
+- just a well-produced reminder
+
+message:
+Hey ${name}, please don't forget to lock your computer next time.
+
+tip:
+a two-second lock beats a full terminal narration every time.
+`;
+let i=0; const t=document.getElementById('text');
+(function type(){ t.textContent = story.slice(0,i++); if(i<=story.length) setTimeout(type,26); })();
+</script></body></html>

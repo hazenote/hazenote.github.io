@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Desk Sensors</title>
+<style>
+body{margin:0;min-height:100vh;background:#071019;color:#e2e8f0;font-family:Inter,system-ui,sans-serif;padding:24px}
+.wrap{max-width:1100px;margin:auto}
+h1{font-size:clamp(2rem,4vw,3.4rem);margin:0 0 10px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;margin-top:22px}
+.card{padding:20px;border-radius:22px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08)}
+.label{font-size:.9rem;color:#93c5fd;margin-bottom:8px}
+.value{font-size:2rem;font-weight:800}
+.pulse{display:inline-block;width:14px;height:14px;border-radius:50%;background:#22c55e;box-shadow:0 0 0 0 rgba(34,197,94,.7);animation:pulse 1.6s infinite}
+@keyframes pulse{70%{box-shadow:0 0 0 16px rgba(34,197,94,0)}100%{box-shadow:0 0 0 0 rgba(34,197,94,0)}}
+.feed{margin-top:18px;line-height:1.8;white-space:pre-wrap;font-family:Consolas,monospace;color:#bfdbfe}
+</style></head><body><div class="wrap">
+<h1>Desk Sensor Summary</h1>
+<p></p>
+<div class="grid">
+  <div class="card"><div class="label">Presence monitor</div><div class="value"><span class="pulse"></span> user absent</div></div>
+  <div class="card"><div class="label">Keyboard inactivity</div><div class="value" id="kbd">00s</div></div>
+  <div class="card"><div class="label">Lock status</div><div class="value">unsecured</div></div>
+  <div class="card"><div class="label">Recommendation</div><div class="value" style="font-size:1.2rem;line-height:1.4" id="rec"></div></div>
+</div>
+<div class="feed" id="feed"></div>
+</div>
+<script>
+
+function getTargetName() {
+  return localStorage.getItem('lock_prank_name') || 'there';
+}
+
+const name = getTargetName();
+document.getElementById('rec').textContent = `Hey ${name}, please don't forget to lock your computer next time.`;
+let sec = 0;
+setInterval(() => {
+  sec++;
+  document.getElementById('kbd').textContent = String(sec).padStart(2,'0') + 's';
+}, 1000);
+const lines = [
+  '[SENSOR] chair pressure: no longer detected',
+  '[SENSOR] keyboard activity: stopped',
+  '[SENSOR] screen state: still unlocked',
+  `[NOTICE] Reminder generated for ${name}`,
+  `[TIP] ${name}, a fast lock is cleaner than a long dashboard report`
+];
+let i=0; const feed = document.getElementById('feed');
+(function loop(){
+  feed.textContent += lines[i] + "\n";
+  i = (i + 1) % lines.length;
+  setTimeout(loop, 900);
+})();
+</script></body></html>

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lock Reminder Launcher</title>
+  <style>
+    :root{
+      --bg1:#0b1020;--bg2:#141b34;--card:rgba(255,255,255,.08);--border:rgba(255,255,255,.12);
+      --text:#f8fafc;--muted:#cbd5e1;--accent:#22c55e;--accent2:#38bdf8;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;min-height:100vh;padding:24px;color:var(--text);
+      font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(56,189,248,.18), transparent 30%),
+        radial-gradient(circle at bottom right, rgba(34,197,94,.16), transparent 28%),
+        linear-gradient(135deg,var(--bg1),var(--bg2));
+      display:grid;place-items:center;
+    }
+    .card{
+      width:min(1120px,96vw);background:var(--card);border:1px solid var(--border);border-radius:28px;
+      padding:30px;backdrop-filter:blur(14px);box-shadow:0 28px 90px rgba(0,0,0,.35)
+    }
+    h1{margin:0 0 10px;font-size:clamp(2rem,4.6vw,3.6rem)}
+    p{margin:0 0 16px;color:var(--muted);line-height:1.65}
+    .row{display:flex;gap:12px;flex-wrap:wrap;margin:18px 0}
+    input{
+      flex:1 1 260px;padding:16px 18px;border-radius:16px;border:1px solid rgba(255,255,255,.15);
+      background:rgba(255,255,255,.06);color:#fff;font-size:1rem;outline:none
+    }
+    button{
+      border:none;border-radius:16px;padding:15px 18px;cursor:pointer;font-size:1rem;font-weight:700;color:#fff;
+      background:linear-gradient(135deg,var(--accent),var(--accent2));box-shadow:0 12px 30px rgba(34,197,94,.2)
+    }
+    .preview{
+      margin:12px 0 20px;padding:14px 16px;border-radius:16px;background:rgba(0,0,0,.18);
+      border:1px dashed rgba(255,255,255,.14)
+    }
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-top:18px}
+    .tile{padding:16px;border-radius:18px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08)}
+    .tile h3{margin:0 0 8px;font-size:1rem}
+    .tile p{margin:0 0 12px;font-size:.95rem}
+    .small{font-size:.92rem;opacity:.88;margin-top:16px}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Lock Reminder V1.1</h1>
+    <p>Enter the Target name :</p>
+    <div class="row">
+      <input id="nameInput" placeholder="Enter target name..." />
+      <button onclick="saveName()">Save name</button>
+    </div>
+    <div class="preview" id="preview">Preview: Hey there, please don't forget to lock your computer next time.</div>
+
+    <div class="grid">
+      <div class="tile"><h3>1 — Matrix Terminal</h3><p>Green code rain + typed advisory.</p><button onclick="launch('page1_matrix.html')">Open</button></div>
+      <div class="tile"><h3>2 — Lock Timeline</h3><p>Animated sequence showing what happened after leaving.</p><button onclick="launch('page2_timeline.html')">Open</button></div>
+      <div class="tile"><h3>3 — Desk Sensors</h3><p>Motion and keyboard inactivity dashboard.</p><button onclick="launch('page3_sensors.html')">Open</button></div>
+      <div class="tile"><h3>4 — Training Module</h3><p>Fake compliance lesson with progress ring.</p><button onclick="launch('page4_training.html')">Open</button></div>
+      <div class="tile"><h3>5 — Typing Ghost</h3><p>Terminal-style auto narration of the incident.</p><button onclick="launch('page5_typingghost.html')">Open</button></div>
+      <div class="tile"><h3>7 — Idle Detector</h3><p>Big pulsing idle tracker with event feed.</p><button onclick="launch('page7_idledetector.html')">Open</button></div>
+      <div class="tile"><h3>11 — Polite macOS-ish Note</h3><p>Clean, calm reminder with subtle animation.</p><button onclick="launch('page11_polite.html')">Open</button></div>
+    </div>
+    <div class="small">Hosted_Version <code>index.html</code></div>
+  </div>
+
+<script>
+  const input = document.getElementById('nameInput');
+  const preview = document.getElementById('preview');
+  function getName(){ return (input.value || localStorage.getItem('lock_prank_name') || '').trim(); }
+  function updatePreview(){
+    const name = getName();
+    preview.textContent = name ? `Preview: Hey ${name}, please don't forget to lock your computer next time.` : "Preview: Hey there, please don't forget to lock your computer next time.";
+  }
+  function saveName(){
+    const name = input.value.trim();
+    if(!name){ alert('Please enter a name first.'); return; }
+    localStorage.setItem('lock_prank_name', name);
+    updatePreview();
+  }
+  function launch(file){
+    const name = getName();
+    if(name) localStorage.setItem('lock_prank_name', name);
+    window.open(file, '_blank');
+  }
+  addEventListener('DOMContentLoaded', () => {
+    const saved = localStorage.getItem('lock_prank_name');
+    if(saved) input.value = saved;
+    updatePreview();
+  });
+  input.addEventListener('input', updatePreview);
+</script>
+</body>
+</html>

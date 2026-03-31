@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Lock Timeline</title>
+<style>
+body{margin:0;min-height:100vh;background:linear-gradient(180deg,#08111f,#101b34);color:#eef2ff;font-family:Inter,system-ui,sans-serif;padding:28px}
+.wrap{max-width:980px;margin:0 auto}
+h1{font-size:clamp(2rem,5vw,4rem);margin:0 0 10px}
+p{color:#cbd5e1;line-height:1.65}
+.timeline{position:relative;margin-top:28px;padding-left:28px}
+.timeline:before{content:'';position:absolute;left:10px;top:0;bottom:0;width:4px;background:linear-gradient(#38bdf8,#22c55e);border-radius:999px}
+.item{position:relative;margin:0 0 22px;padding:18px 20px;border-radius:20px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);transform:translateX(20px);opacity:0;animation:slide .6s forwards}
+.item:before{content:'';position:absolute;left:-24px;top:24px;width:16px;height:16px;border-radius:50%;background:#38bdf8;box-shadow:0 0 18px rgba(56,189,248,.6)}
+.item:nth-child(2){animation-delay:.3s}.item:nth-child(3){animation-delay:.6s}.item:nth-child(4){animation-delay:.9s}.item:nth-child(5){animation-delay:1.2s}
+.big{font-size:1.2rem;font-weight:700;margin-bottom:8px}
+.banner{margin-top:20px;padding:18px;border-radius:18px;background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.25)}
+@keyframes slide{to{transform:translateX(0);opacity:1}}
+</style></head><body><div class="wrap">
+<h1>Incident Timeline</h1>
+<p></p>
+<div class="timeline" id="timeline"></div>
+<div class="banner" id="banner"></div>
+</div>
+<script>
+
+function getTargetName() {
+  return localStorage.getItem('lock_prank_name') || 'there';
+}
+
+const name = getTargetName();
+const steps = [
+  ['T+00s', `${name} stands up and leaves the desk.`],
+  ['T+04s', 'Keyboard activity stops. System remains unlocked.'],
+  ['T+11s', 'Nearby coworker detects an educational opportunity.'],
+  ['T+18s', 'Reminder protocol is initiated with tasteful animation.'],
+  ['T+24s', `Conclusion: Hey ${name}, please don\'t forget to lock your computer next time.`]
+];
+const timeline = document.getElementById('timeline');
+steps.forEach(([t,desc]) => {
+  const div = document.createElement('div');
+  div.className = 'item';
+  div.innerHTML = `<div class="big">${t}</div><div>${desc}</div>`;
+  timeline.appendChild(div);
+});
+document.getElementById('banner').innerHTML = `<strong>Best practice:</strong> A one-second lock now saves a very theatrical reminder later, ${name}.`;
+</script></body></html>

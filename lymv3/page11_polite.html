@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Polite Note</title>
+<style>
+body{margin:0;min-height:100vh;display:grid;place-items:center;background:linear-gradient(180deg,#f5f7fb,#e2e8f0);font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',system-ui,sans-serif;color:#0f172a;padding:24px}
+.window{width:min(760px,94vw);background:#fff;border-radius:26px;box-shadow:0 25px 70px rgba(15,23,42,.16);overflow:hidden;border:1px solid #e2e8f0}
+.bar{height:52px;background:#f8fafc;display:flex;align-items:center;padding:0 18px;gap:8px;border-bottom:1px solid #e5e7eb}
+.dot{width:12px;height:12px;border-radius:50%}.r{background:#ff5f57}.y{background:#febc2e}.g{background:#28c840}
+.content{padding:32px}
+h1{margin:0 0 10px;font-size:clamp(2rem,4vw,3rem)}
+p{line-height:1.75;color:#334155}
+.note{margin-top:18px;padding:18px;border-radius:18px;background:#f8fafc;border:1px solid #e2e8f0;transform:translateY(8px);opacity:0;animation:rise .8s .3s forwards}
+@keyframes rise{to{transform:translateY(0);opacity:1}}
+</style></head><body><div class="window">
+<div class="bar"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+<div class="content">
+<h1>Friendly Reminder</h1>
+<p></p>
+<div class="note" id="note"></div>
+</div>
+</div>
+<script>
+
+function getTargetName() {
+  return localStorage.getItem('lock_prank_name') || 'there';
+}
+
+const name = getTargetName();
+document.getElementById('note').innerHTML = `<strong>Hey ${name}, please don't forget to lock your computer next time.</strong><br><br>That would have been much less work for both of us.`;
+</script></body></html>

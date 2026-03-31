@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Matrix Reminder</title>
+<style>
+html,body{margin:0;height:100%;overflow:hidden;background:#000;color:#39ff14;font-family:Consolas,monospace}
+canvas{position:fixed;inset:0}
+.overlay{position:relative;z-index:2;height:100%;display:grid;place-items:center;padding:24px;text-align:center}
+.panel{max-width:900px;background:rgba(0,0,0,.52);border:1px solid rgba(57,255,20,.35);border-radius:24px;box-shadow:0 0 35px rgba(57,255,20,.14);padding:28px;backdrop-filter:blur(4px)}
+h1{margin:0 0 16px;font-size:clamp(2rem,6vw,4.5rem);text-shadow:0 0 16px rgba(57,255,20,.5)}
+#typed{font-size:clamp(1rem,2.1vw,1.35rem);line-height:1.8;white-space:pre-wrap;min-height:170px}
+.hint{margin-top:14px;opacity:.8;font-size:.95rem}
+</style></head><body>
+<canvas id="matrix"></canvas>
+<div class="overlay"><div class="panel">
+<h1>WORKSTATION COMPROMISED</h1>
+<div id="typed"></div>
+<div class="hint">Press Esc or close the tab to exit</div>
+</div></div>
+<script>
+
+function getTargetName() {
+  return localStorage.getItem('lock_prank_name') || 'there';
+}
+
+const name = getTargetName();
+const lines = [
+  `Identity confirmed: ${name}`,
+  'Scanning desk abandonment logs...',
+  'Reviewing suspiciously unlocked workstation...',
+  '',
+  `Hey ${name}, please don\'t forget to lock your computer next time.`,
+  '',
+  'Recommendation: press your lock shortcut before walking away.'
+];
+const typed = document.getElementById('typed');
+let fullText = lines.join('\n'), i=0;
+(function type(){ typed.textContent = fullText.slice(0,i++); if(i<=fullText.length) setTimeout(type,32); })();
+const canvas = document.getElementById('matrix'), ctx = canvas.getContext('2d');
+const chars = '01ABCDEFGHIJKLMNOPQRSTUVWXYZ$#@%&*+-'.split('');
+let fontSize = 18, cols = 0, drops = [];
+function resize(){ canvas.width=innerWidth; canvas.height=innerHeight; cols=Math.floor(canvas.width/fontSize); drops=Array(cols).fill(1); }
+resize(); addEventListener('resize', resize);
+function draw(){
+  ctx.fillStyle='rgba(0,0,0,0.08)'; ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle='#39ff14'; ctx.font = fontSize + 'px monospace';
+  for(let i=0;i<drops.length;i++){
+    const ch = chars[Math.floor(Math.random()*chars.length)];
+    ctx.fillText(ch, i*fontSize, drops[i]*fontSize);
+    if(drops[i]*fontSize>canvas.height && Math.random()>0.975) drops[i]=0;
+    drops[i]++;
+  }
+}
+setInterval(draw, 40);
+</script></body></html>
