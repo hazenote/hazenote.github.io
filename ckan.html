@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Work Progress Tracker</title>
+<style>
+body {
+    font-family: Arial, sans-serif;
+    max-width: 1000px;
+    margin: 40px auto;
+    padding: 20px;
+    background: #f5f7fb;
+    color: #222;
+}
+.container {
+    background: white;
+    padding: 30px;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+}
+h1, h2 { margin-top: 0; }
+.row {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+}
+label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 6px;
+}
+input[type="time"], input[type="checkbox"] {
+    padding: 10px;
+    font-size: 16px;
+}
+.day-settings {
+    display: grid;
+    grid-template-columns: 140px 100px 100px 100px;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 8px;
+}
+.progress {
+    width: 100%;
+    height: 30px;
+    background: #e5e7eb;
+    border-radius: 999px;
+    overflow: hidden;
+    margin: 10px 0 5px;
+}
+.bar {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #4f46e5, #06b6d4);
+    transition: width 0.5s ease;
+}
+.value {
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 20px;
+}
+.card {
+    background: #f8fafc;
+    padding: 15px;
+    border-radius: 12px;
+    margin-bottom: 25px;
+}
+.small {
+    color: #666;
+    font-size: 14px;
+}
+@media (max-width: 700px) {
+    .day-settings {
+        grid-template-columns: 1fr;
+        padding: 10px;
+        border: 1px solid #eee;
+        border-radius: 10px;
+    }
+}
+</style>
+</head>
+<body>
+<div class="container">
+    <h1>C KAN C FINI?</h1>
+    <p>Track your workday and workweek progress. V1-KLODECODE</p>
+
+    <div class="card">
+        <h2>Default Schedule</h2>
+        <div class="row">
+            <div>
+                <label for="defaultStart">Start Time</label>
+                <input type="time" id="defaultStart" value="09:00">
+            </div>
+            <div>
+                <label for="defaultEnd">End Time</label>
+                <input type="time" id="defaultEnd" value="17:00">
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>Custom Schedule Per Day</h2>
+        <p class="small">Enable only the days you want to override.</p>
+        <div id="customDays"></div>
+    </div>
+
+    <h2>Day Progress</h2>
+    <div class="progress"><div class="bar" id="dayBar"></div></div>
+    <div class="value" id="dayValue">0%</div>
+    <div class="small" id="midpointToday">50% of today's shift will be reached at --:--</div>
+
+    <h2>Week Progress</h2>
+    <div class="progress"><div class="bar" id="weekBar"></div></div>
+    <div class="value" id="weekValue">0%</div>
+    <div class="small" id="midpointWeek">50% of this work week will be reached at --</div>
+</div>
+
+<script>
+const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+
+function timeToMinutes(t) {
+    const [h, m] = t.split(':').map(Number);
+    return h * 60 + m;
+}
+
+function minutesToTime(mins) {
+    mins = ((mins % 1440) + 1440) % 1440;
+    const h = Math.floor(mins / 60);
+    const m = Math.round(mins % 60);
+    return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
+}
+
+function getDuration(start, end) {
+    let d = end - start;
+    if (d <= 0) d += 1440;
+    return d;
+}
+
+function createCustomDays() {
+    const container = document.getElementById('customDays');
+    DAYS.forEach(day => {
+        const safe = day.toLowerCase();
+        const div = document.createElement('div');
+        div.className = 'day-settings';
+        div.innerHTML = `
+            <strong>${day}</strong>
+            <label><input type="checkbox" id="${safe}_enabled"> Custom</label>
+            <input type="time" id="${safe}_start" value="09:00">
+            <input type="time" id="${safe}_end" value="17:00">
+        `;
+        container.appendChild(div);
+    });
+}
+
+function getScheduleForDay(dayIndex) { // 0=Monday
+    const day = DAYS[dayIndex].toLowerCase();
+    const enabled = document.getElementById(day + '_enabled').checked;
+    if (enabled) {
+        return {
+            start: document.getElementById(day + '_start').value,
+            end: document.getElementById(day + '_end').value
+        };
+    }
+    return {
+        start: document.getElementById('defaultStart').value,
+        end: document.getElementById('defaultEnd').value
+    };
+}
+
+function getDayProgress(start, end, now = new Date()) {
+    const startMin = timeToMinutes(start);
+    const endMin = timeToMinutes(end);
+    const duration = getDuration(startMin, endMin);
+    const current = now.getHours() * 60 + now.getMinutes() + now.getSeconds() / 60;
+
+    let elapsed = current - startMin;
+    if (elapsed < 0) elapsed += 1440;
+
+    const endAbsolute = (startMin + duration) % 1440;
+    const inShift = startMin < endAbsolute
+        ? current >= startMin && current < endAbsolute
+        : current >= startMin || current < endAbsolute;
+
+    if (!inShift) {
+        const beforeShift = startMin < endAbsolute
+            ? current < startMin
+            : current >= endAbsolute && current < startMin;
+        return beforeShift ? 0 : 100;
+    }
+
+    return Math.max(0, Math.min(100, (elapsed / duration) * 100));
+}
+
+function saveSettings() {
+    const ids = Array.from(document.querySelectorAll('input')).map(i => i.id);
+    ids.forEach(id => localStorage.setItem(id, document.getElementById(id).type === 'checkbox'
+        ? document.getElementById(id).checked
+        : document.getElementById(id).value));
+}
+
+function loadSettings() {
+    const ids = Array.from(document.querySelectorAll('input')).map(i => i.id);
+    ids.forEach(id => {
+        const value = localStorage.getItem(id);
+        if (value !== null) {
+            const el = document.getElementById(id);
+            if (el.type === 'checkbox') el.checked = value === 'true';
+            else el.value = value;
+        }
+    });
+}
+
+function calculateWeekSchedules() {
+    const schedules = [];
+    for (let i = 0; i < 5; i++) {
+        const s = getScheduleForDay(i);
+        const duration = getDuration(timeToMinutes(s.start), timeToMinutes(s.end));
+        schedules.push({ ...s, duration });
+    }
+    return schedules;
+}
+
+function getWeekProgress() {
+    const now = new Date();
+    const jsDay = now.getDay(); // Sunday=0
+    const weekday = jsDay === 0 ? 7 : jsDay; // Monday=1..Sunday=7
+
+    const schedules = calculateWeekSchedules();
+    const totalMinutes = schedules.reduce((sum, s) => sum + s.duration, 0);
+
+    if (weekday > 5) return 100;
+
+    let completed = 0;
+
+    for (let i = 0; i < weekday - 1; i++) {
+        completed += schedules[i].duration;
+    }
+
+    const todaySchedule = schedules[weekday - 1];
+    completed += todaySchedule.duration *
+        (getDayProgress(todaySchedule.start, todaySchedule.end, now) / 100);
+
+    return Math.max(0, Math.min(100, (completed / totalMinutes) * 100));
+}
+
+function getTodayMidpoint() {
+    const now = new Date();
+    const jsDay = now.getDay();
+    const weekday = jsDay === 0 ? 7 : jsDay;
+
+    if (weekday < 1 || weekday > 5) return 'Not a scheduled workday';
+
+    const schedule = getScheduleForDay(weekday - 1);
+    const startMin = timeToMinutes(schedule.start);
+    const duration = getDuration(startMin, timeToMinutes(schedule.end));
+    return minutesToTime(startMin + duration / 2);
+}
+
+function getWeekMidpoint() {
+    const schedules = calculateWeekSchedules();
+    const totalMinutes = schedules.reduce((sum, s) => sum + s.duration, 0);
+    const half = totalMinutes / 2;
+
+    let cumulative = 0;
+    for (let i = 0; i < schedules.length; i++) {
+        if (cumulative + schedules[i].duration >= half) {
+            const offset = half - cumulative;
+            const time = minutesToTime(timeToMinutes(schedules[i].start) + offset);
+            return DAYS[i] + ' at ' + time;
+        }
+        cumulative += schedules[i].duration;
+    }
+    return '--';
+}
+
+function update() {
+    saveSettings();
+
+    const now = new Date();
+    const jsDay = now.getDay();
+    const weekday = jsDay === 0 ? 7 : jsDay;
+
+    let dayProgress = 0;
+    if (weekday >= 1 && weekday <= 5) {
+        const schedule = getScheduleForDay(weekday - 1);
+        dayProgress = getDayProgress(schedule.start, schedule.end, now);
+    }
+
+    const weekProgress = getWeekProgress();
+
+    document.getElementById('dayBar').style.width = dayProgress.toFixed(2) + '%';
+    document.getElementById('dayValue').textContent = dayProgress.toFixed(2) + '%';
+
+    document.getElementById('weekBar').style.width = weekProgress.toFixed(2) + '%';
+    document.getElementById('weekValue').textContent = weekProgress.toFixed(2) + '%';
+
+    document.getElementById('midpointToday').textContent =
+        "50% of today's shift will be reached at " + getTodayMidpoint();
+
+    document.getElementById('midpointWeek').textContent =
+        "50% of this work week will be reached on " + getWeekMidpoint();
+}
+
+createCustomDays();
+loadSettings();
+
+document.querySelectorAll('input').forEach(input => {
+    input.addEventListener('input', update);
+    input.addEventListener('change', update);
+});
+
+update();
+setInterval(update, 1000);
+</script>
+</body>
+</html>
