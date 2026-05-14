@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Salary Tracker</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen p-6">
+  <div class="max-w-3xl mx-auto bg-white rounded-3xl shadow-xl p-8">
+    <h1 class="text-4xl font-bold mb-2">💰 Salary Tracker</h1>
+    <p class="text-gray-600 mb-8">Enter your work hours and salary to see how much you've earned so far today.</p>
+
+    <div class="grid md:grid-cols-2 gap-6">
+      <div>
+        <label class="block text-sm font-medium mb-2">Start Time</label>
+        <input id="startTime" type="time" class="w-full border rounded-xl px-4 py-3" value="09:00" />
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium mb-2">End Time</label>
+        <input id="endTime" type="time" class="w-full border rounded-xl px-4 py-3" value="17:00" />
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium mb-2">Salary Type</label>
+        <select id="salaryType" class="w-full border rounded-xl px-4 py-3">
+          <option value="annual">Annual Salary</option>
+          <option value="monthly">Monthly Salary</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium mb-2">Salary Amount</label>
+        <input id="salaryAmount" type="number" step="0.01" class="w-full border rounded-xl px-4 py-3" placeholder="50000" value="50000" />
+      </div>
+    </div>
+
+    <div class="mt-8">
+      <button onclick="saveSettings()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-2xl font-semibold shadow">
+        Save Settings
+      </button>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6 mt-10">
+      <div class="bg-green-50 rounded-3xl p-6">
+        <div class="text-sm text-gray-600 mb-2">Earned So Far Today</div>
+        <div id="earned" class="text-4xl font-bold">€0.00</div>
+      </div>
+
+      <div class="bg-blue-50 rounded-3xl p-6">
+        <div class="text-sm text-gray-600 mb-2">Workday Completed</div>
+        <div id="percentage" class="text-4xl font-bold">0.00%</div>
+      </div>
+
+      <div class="bg-purple-50 rounded-3xl p-6">
+        <div class="text-sm text-gray-600 mb-2">Hourly Rate</div>
+        <div id="hourlyRate" class="text-3xl font-bold">€0.00</div>
+      </div>
+
+      <div class="bg-yellow-50 rounded-3xl p-6">
+        <div class="text-sm text-gray-600 mb-2">Full Day Earnings</div>
+        <div id="dailyEarnings" class="text-3xl font-bold">€0.00</div>
+      </div>
+    </div>
+
+    <div class="mt-8 text-center text-gray-500 text-sm">
+      Updates automatically every second and saves your settings locally in your browser.
+    </div>
+  </div>
+
+  <script>
+    const WORK_DAYS_PER_YEAR = 260; // 5 days/week × 52 weeks
+
+    function timeToMinutes(timeStr) {
+      const [hours, minutes] = timeStr.split(':').map(Number);
+      return hours * 60 + minutes;
+    }
+
+    function formatCurrency(amount) {
+      return new Intl.NumberFormat(undefined, {
+        style: 'currency',
+        currency: 'EUR',
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      }).format(amount);
+    }
+
+    function saveSettings() {
+      const settings = {
+        startTime: document.getElementById('startTime').value,
+        endTime: document.getElementById('endTime').value,
+        salaryType: document.getElementById('salaryType').value,
+        salaryAmount: document.getElementById('salaryAmount').value
+      };
+      localStorage.setItem('salaryTrackerSettings', JSON.stringify(settings));
+      updateDisplay();
+    }
+
+    function loadSettings() {
+      const saved = localStorage.getItem('salaryTrackerSettings');
+      if (!saved) return;
+
+      const settings = JSON.parse(saved);
+      document.getElementById('startTime').value = settings.startTime || '09:00';
+      document.getElementById('endTime').value = settings.endTime || '17:00';
+      document.getElementById('salaryType').value = settings.salaryType || 'annual';
+      document.getElementById('salaryAmount').value = settings.salaryAmount || '50000';
+    }
+
+    function updateDisplay() {
+      const start = document.getElementById('startTime').value;
+      const end = document.getElementById('endTime').value;
+      const salaryType = document.getElementById('salaryType').value;
+      const salaryAmount = parseFloat(document.getElementById('salaryAmount').value) || 0;
+
+      const startMinutes = timeToMinutes(start);
+      const endMinutes = timeToMinutes(end);
+      const totalMinutes = endMinutes - startMinutes;
+
+      if (totalMinutes <= 0) return;
+
+      const workHours = totalMinutes / 60;
+
+      let annualSalary;
+      if (salaryType === 'annual') {
+        annualSalary = salaryAmount;
+      } else {
+        annualSalary = salaryAmount * 12;
+      }
+
+      const dailyEarnings = annualSalary / WORK_DAYS_PER_YEAR;
+      const hourlyRate = dailyEarnings / workHours;
+
+      const now = new Date();
+      const currentMinutes = now.getHours() * 60 + now.getMinutes() + now.getSeconds() / 60;
+
+      let progress;
+      if (currentMinutes <= startMinutes) {
+        progress = 0;
+      } else if (currentMinutes >= endMinutes) {
+        progress = 1;
+      } else {
+        progress = (currentMinutes - startMinutes) / totalMinutes;
+      }
+
+      const earned = dailyEarnings * progress;
+
+      document.getElementById('earned').textContent = formatCurrency(earned);
+      document.getElementById('percentage').textContent = (progress * 100).toFixed(2) + '%';
+      document.getElementById('hourlyRate').textContent = formatCurrency(hourlyRate);
+      document.getElementById('dailyEarnings').textContent = formatCurrency(dailyEarnings);
+    }
+
+    document.querySelectorAll('input, select').forEach(el => {
+      el.addEventListener('input', updateDisplay);
+      el.addEventListener('change', updateDisplay);
+    });
+
+    loadSettings();
+    updateDisplay();
+    setInterval(updateDisplay, 1000);
+  </script>
+  <script>
+    // Wishlist functionality
+    function getWishlist() {
+      return JSON.parse(localStorage.getItem('salaryTrackerWishlist') || '[]');
+    }
+
+    function saveWishlist(items) {
+      localStorage.setItem('salaryTrackerWishlist', JSON.stringify(items));
+    }
+
+    function addWishlistItem() {
+      const nameInput = document.getElementById('itemName');
+      const priceInput = document.getElementById('itemPrice');
+
+      const name = nameInput.value.trim();
+      const price = parseFloat(priceInput.value);
+
+      if (!name || !price || price <= 0) return;
+
+      const items = getWishlist();
+      items.push({
+        id: Date.now(),
+        name,
+        price
+      });
+
+      saveWishlist(items);
+      nameInput.value = '';
+      priceInput.value = '';
+      renderWishlist();
+    }
+
+    function deleteWishlistItem(id) {
+      const items = getWishlist().filter(item => item.id !== id);
+      saveWishlist(items);
+      renderWishlist();
+    }
+
+    function minutesToTime(minutes) {
+      const h = Math.floor(minutes / 60) % 24;
+      const m = Math.round(minutes % 60);
+      return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
+    }
+
+    function renderWishlist() {
+      const container = document.getElementById('wishlistContainer');
+      if (!container) return;
+
+      const items = getWishlist();      
+      const earnedText = document.getElementById('earned').textContent;
+      const earned = parseFloat(earnedText.replace(/[^0-9.,-]/g, '').replace(',', '.')) || 0;
+
+      const startMinutes = timeToMinutes(document.getElementById('startTime').value);
+      const endMinutes = timeToMinutes(document.getElementById('endTime').value);
+      const totalMinutes = endMinutes - startMinutes;
+      const dailyEarningsText = document.getElementById('dailyEarnings').textContent;
+      const dailyEarnings = parseFloat(dailyEarningsText.replace(/[^0-9.,-]/g, '').replace(',', '.')) || 0;
+
+      if (items.length === 0) {
+        container.innerHTML = '<div class="text-gray-500 text-center py-8">No items yet. Add something you want to buy.</div>';
+        return;
+      }
+
+      container.innerHTML = items.map(item => {
+        const progress = Math.min((earned / item.price) * 100, 100);
+        const remaining = Math.max(item.price - earned, 0);
+
+        let affordabilityText = '';
+
+        if (earned >= item.price) {
+          affordabilityText = '✅ You can afford this today!';
+        } else if (dailyEarnings >= item.price) {
+          const ratio = item.price / dailyEarnings;
+          const affordMinutes = startMinutes + ratio * totalMinutes;
+          affordabilityText = `⏰ Affordable at ${minutesToTime(affordMinutes)}`;
+        } else {
+          const daysNeeded = Math.ceil(item.price / dailyEarnings);
+          affordabilityText = `📅 Requires approximately ${daysNeeded} work day${daysNeeded > 1 ? 's' : ''}`;
+        }
+
+        return `
+          <div class="bg-gray-50 rounded-3xl p-6 border border-gray-200">
+            <div class="flex justify-between items-start gap-4">
+              <div>
+                <h3 class="text-xl font-bold">${item.name}</h3>
+                <p class="text-gray-600">${formatCurrency(item.price)}</p>
+              </div>
+              <button onclick="deleteWishlistItem(${item.id})" class="text-red-600 hover:text-red-800 font-semibold">Delete</button>
+            </div>
+
+            <div class="mt-4">
+              <div class="flex justify-between text-sm mb-1">
+                <span>${progress.toFixed(1)}%</span>
+                <span>${formatCurrency(remaining)} remaining</span>
+              </div>
+              <div class="w-full bg-gray-200 rounded-full h-4 overflow-hidden">
+                <div class="bg-green-500 h-4 rounded-full transition-all duration-1000" style="width: ${progress}%"></div>
+              </div>
+            </div>
+
+            <div class="mt-3 text-sm text-gray-700">
+              ${formatCurrency(earned)} earned today
+            </div>
+
+            <div class="mt-2 font-medium text-blue-700">
+              ${affordabilityText}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Extend updateDisplay to also refresh wishlist
+    const originalUpdateDisplay = updateDisplay;
+    updateDisplay = function() {
+      originalUpdateDisplay();
+      renderWishlist();
+    };
+
+    // Initialize wishlist after page load
+    setTimeout(renderWishlist, 100);
+  </script>
+
+  <!-- Wishlist Section -->
+  <div class="max-w-3xl mx-auto mt-8 bg-white rounded-3xl shadow-xl p-8">
+    <h2 class="text-3xl font-bold mb-2">🛒 Purchase Goals</h2>
+    <p class="text-gray-600 mb-6">Track how close you are to buying the things you want.</p>
+
+    <div class="grid md:grid-cols-3 gap-4 mb-6">
+      <input id="itemName" type="text" placeholder="Item name (e.g. OLED TV)" class="border rounded-xl px-4 py-3" />
+      <input id="itemPrice" type="number" step="0.01" placeholder="Price (€)" class="border rounded-xl px-4 py-3" />
+      <button onclick="addWishlistItem()" class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-2xl font-semibold shadow">Add Item</button>
+    </div>
+
+    <div id="wishlistContainer" class="space-y-4"></div>
+  </div>
+</body>
+</html>
